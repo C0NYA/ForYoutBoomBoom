@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tetris Game</title>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+    }
+
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(10, 30px);
+        grid-template-rows: repeat(20, 30px);
+        border: 2px solid #333;
+        margin-bottom: 10px;
+    }
+
+    .game-info {
+        text-align: center;
+    }
+
+    .game-info p {
+        margin: 5px;
+    }
+
+    .game-info button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: skyblue;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+    }
+
+    .game-info button:hover {
+        background-color: skyblue;
+    }
+
+    .cell {
+        border: 1px solid #ccc;
+    }
+
+    .block {
+        background-color: skyblue;
+    }
+</style>
+</head>
+<body>
+<div class="game-container">
+    <div class="game-board" id="game-board"></div>
+    <div class="game-info">
+        <p>Score: <span id="score">0</span></p>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+</div>
+
+<script>
+// Define Tetris pieces and their rotations
+// Define Tetris pieces and their rotations
+const pieces = {
+    I: [
+        [[1, 1, 1, 1]],
+        [[1], [1], [1], [1]]
+    ],
+    J: [
+        [[1, 0, 0],
+         [1, 1, 1]],
+        [[0, 1],
+         [0, 1],
+         [1, 1]],
+        [[1, 1, 1],
+         [0, 0, 1]],
+        [[1, 1],
+         [1, 0],
+         [1, 0]]
+    ],
+    L: [
+        [[0, 0, 1],
+         [1, 1, 1]],
+        [[1, 1],
+         [0, 1],
+         [0, 1]],
+        [[1, 1, 1],
+         [1, 0, 0]],
+        [[1, 0],
+         [1, 0],
+         [1, 1]]
+    ],
+    O: [
+        [[1, 1],
+         [1, 1]]
+    ],
+    S: [
+        [[0, 1, 1],
+         [1, 1, 0]],
+        [[1, 0],
+         [1, 1],
+         [0, 1]]
+    ],
+    Z: [
+        [[1, 1, 0],
+         [0, 1, 1]],
+        [[0, 1],
+         [1, 1],
+         [1, 0]]
+    ],
+    T: [
+        [[0, 1, 0],
+         [1, 1, 1]],
+        [[0, 1],
+         [1, 1],
+         [0, 1]],
+        [[1, 1, 1],
+         [0, 1, 0]],
+        [[1, 0],
+         [1, 1],
+         [1, 0]]
+    ]
+};
+
+
+let score = 0;
+let board = [];
+let currentPiece = null;
+let interval = null;
+
+// Function to start the game
+function startGame() {
+    score = 0;
+    document.getElementById('score').innerText = score;
+    initializeBoard();
+    currentPiece = getRandomPiece();
+    interval = setInterval(dropPiece, 1000);
+    renderBoard();
+}
+
+// Function to initialize the game board
+function initializeBoard() {
+    board = [];
+    for (let row = 0; row < 20; row++) {
+        board[row] = Array(10).fill(0);
+    }
+}
+
+// Function to get a random piece
+function getRandomPiece() {
+    const pieceTypes = Object.keys(pieces);
+    const randomType = pieceTypes[Math.floor(Math.random() * pieceTypes.length)];
+    const randomRotation = Math.floor(Math.random() * pieces[randomType].length);
+    return { type: randomType, rotation: randomRotation, x: 4, y: 0 };
+}
+
+// Function to render the game board
+function renderBoard() {
+    const boardElement = document.getElementById('game-board');
+    boardElement.innerHTML = '';
+    for (let row = 0; row < 20; row++) {
+        for (let col = 0; col < 10; col++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            if (board[row][col] === 1) {
+                cell.classList.add('block');
+            }
+            boardElement.appendChild(cell);
+        }
+    }
+    renderPiece();
+}
+
+// Function to render the current piece on the board
+function renderPiece() {
+    if (!currentPiece) return;
+    const { type, rotation, x, y } = currentPiece;
+    const piece = pieces[type][rotation];
+    piece.forEach((row, rowIndex) => {
+        row.forEach((value, colIndex) => {
+            if (value === 1) {
+                const absoluteY = y + rowIndex;
+                const absoluteX = x + colIndex;
+                if (absoluteY >= 0 && absoluteY < 20 && absoluteX >= 0 && absoluteX < 10) {
+                    const cellIndex = (absoluteY * 10) + absoluteX;
+                    const cell = document.getElementsByClassName('cell')[cellIndex];
+                    if (cell) {
+                        cell.classList.add('block');
+                    }
+                }
+            }
+        });
+    });
+}
+
+// Function to drop the current piece down by one row
+function dropPiece() {
+    if (pieceCanMove(1, 0)) {
+        currentPiece.y++;
+    } else {
+        lockPiece();
+        clearLines();
+        currentPiece = getRandomPiece();
+        if (!pieceCanMove(0, 0)) {
+            clearInterval(interval);
+            alert('Game Over!');
+        }
+    }
+    renderBoard();
+}
+
+// Function to check if the piece can move in a certain direction
+function pieceCanMove(deltaY, deltaX) {
+    const { type, rotation, x, y } = currentPiece;
+    const piece = pieces[type][rotation];
+    let canMove = true;
+    piece.forEach((row, rowIndex) => {
+        row.forEach((value, colIndex) => {
+            if (value === 1) {
+                const newY = y + rowIndex + deltaY;
+                const newX = x + colIndex + deltaX;
+                if (newY >= 20 || newX < 0 || newX >= 10 || (newY >= 0 && board[newY][newX] === 1)) {
+                    canMove = false;
+                }
+            }
+        });
+    });
+    return canMove;
+}
+
+// Function to lock the current piece onto the board
+function lockPiece() {
+    const { type, rotation, x, y } = currentPiece;
+    const piece = pieces[type][rotation];
+    piece.forEach((row, rowIndex) => {
+        row.forEach((value, colIndex) => {
+            if (value === 1) {
+                const absoluteY = y + rowIndex;
+                const absoluteX = x + colIndex;
+                if (absoluteY >= 0 && absoluteY < 20 && absoluteX >= 0 && absoluteX < 10) {
+                    board[absoluteY][absoluteX] = 1;
+                }
+            }
+        });
+    });
+}
+
+// Function to clear completed lines
+function clearLines() {
+    let linesCleared = 0;
+    for (let row = 0; row < 20; row++) {
+        if (board[row].every(cell => cell === 1)) {
+            board.splice(row, 1);
+            board.unshift(Array(10).fill(0));
+            linesCleared++;
+        }
+    }
+    score += linesCleared * 100;
+    document.getElementById('score').innerText = score;
+}
+
+// Handle keyboard input for controlling the piece
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowLeft' && pieceCanMove(0, -1)) {
+        currentPiece.x--;
+    } else if (event.key === 'ArrowRight' && pieceCanMove(0, 1)) {
+        currentPiece.x++;
+    } else if (event.key === 'ArrowDown') {
+        dropPiece();
+    } else if (event.key === 'ArrowUp') {
+        rotatePiece();
+    }
+    renderBoard();
+});
+
+// Function to rotate the current piece
+function rotatePiece() {
+    const { type, rotation } = currentPiece;
+    const nextRotation = (rotation + 1) % pieces[type].length;
+    const originalX = currentPiece.x;
+    const originalY = currentPiece.y;
+    currentPiece.rotation = nextRotation;
+    if (!pieceCanMove(0, 0)) {
+        currentPiece.rotation = rotation; // Revert rotation if it causes collision
+    }
+    currentPiece.x = originalX;
+    currentPiece.y = originalY;
+}
+
+</script>
+</body>
+</html>

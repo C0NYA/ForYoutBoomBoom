@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            text-align: center;
+            background-color: white;
+        }
+        button{
+            background-color: skyblue;
+            font-family: 'CWDangamAsac-Bold';
+        }
+
+        @font-face {
+                font-family: 'CWDangamAsac-Bold';
+
+                src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/CWDangamAsac-Bold.woff') format('woff');
+                font-weight: normal;
+                font-style: normal;
+            }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <button onclick="setCount()"> <h1>
+        count is <span id="number"></span>
+    </h1> </button>
+
+
+    <script>
+        let number = 0;
+
+        const setCount= () =>{
+            number = ++number;
+            setNumber();
+        }
+        
+        const setNumber= () =>{
+            document.getElementById("number").innerText=number;
+        }
+
+        setNumber();
+    </script>
+</body>
+</html>
